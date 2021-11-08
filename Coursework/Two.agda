@@ -93,7 +93,8 @@ module A where
      (1 MARK) -}
 
   propositional : (n m : ℕ) → isPropositional (n ≤ m)
-  propositional = {!!}
+  propositional zero m tt tt = refl
+  propositional (suc n) (suc m) = propositional n m
 
 ------------------
 module B where
@@ -106,13 +107,30 @@ module B where
     z≤n : {n : ℕ} -> zero  ≤ n
     s≤s : {m n : ℕ} -> m ≤ n -> suc m ≤ suc n
 
+  ≤-refl : ∀ {n} → n ≤ n
+  ≤-refl {zero} = z≤n
+  ≤-refl {suc n} = s≤s ≤-refl
+
+  ≤-step : ∀ {m n} → m ≤ n → m ≤ suc n
+  ≤-step z≤n = z≤n
+  ≤-step (s≤s p) = s≤s (≤-step p)
+
+
   {- ??? 2.3 For comparision, show that 17 ≤ 42 using this definition.
          After you have done it yourself, you could see if Auto can do
          it, too.
      (1 MARK) -}
 
   17≤42 : 17 ≤ 42
-  17≤42 = {!!}
+  17≤42 = s≤s
+            (s≤s
+             (s≤s
+              (s≤s
+               (s≤s
+                (s≤s
+                 (s≤s
+                  (s≤s
+                   (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s (s≤s z≤n))))))))))))))))
 
 
   -- We already proved that this definition was propositional and
@@ -145,15 +163,21 @@ module C where
   17≤42 : 17 ≤ 42
   17≤42 = {!!}
 
+  cong-suc : ∀ {n m} → n ≤ m → suc n ≤ suc m
+  cong-suc {n} ≤-refl = ≤-refl
+  cong-suc {n} (≤-step p) = ≤-step (cong-suc p)
+
 {- ??? 2.5 Show that you can translate back and forth between
        A.≤ and B.≤.
    (2 MARKS) -}
 
 A→B : (n m : ℕ) -> n A.≤ m -> n B.≤ m
-A→B = {!!}
+A→B zero m tt = B.z≤n
+A→B (suc n) (suc m) p = B.s≤s (A→B n m p)
 
 B→A : {n m : ℕ} -> n B.≤ m -> n A.≤ m
-B→A = {!!}
+B→A {zero} B.z≤n = tt
+B→A {suc n} (B.s≤s p) = B→A p
 
 {- ??? 2.6 Now put together what you have so far to show that
        A.≤ and B.≤ are isomorphic.
@@ -166,23 +190,39 @@ B→A = {!!}
 -- definition for each field in the record.
 
 A↔B : (n m : ℕ) -> n A.≤ m ↔ n B.≤ m
-A↔B n m = {!!}
+A↔B n m = record
+  { to = A→B n m
+  ; from = B→A
+  ; left-inverse-of = α {n} {m}
+  ; right-inverse-of = β } where
+
+  α : ∀ {n m} → (x : n A.≤ m) → B→A (A→B n m x) ≡ x
+  α {zero} {m} tt = refl
+  α {suc n} {suc m} = α {n}
+
+  β : ∀ {n m} → (x : n B.≤ m) → A→B n m (B→A x) ≡ x
+  β B.z≤n = refl
+  β (B.s≤s x) = cong B.s≤s (β x)
 
 {- ??? 2.7 Now show that you can translate between B.≤ and C.≤.
    (2 MARKS) -}
 
 B→C : {n m : ℕ} -> n B.≤ m -> n C.≤ m
-B→C = {!!}
+B→C {zero} {zero} B.z≤n = C.≤-refl
+B→C {zero} {suc m} B.z≤n = C.≤-step (B→C B.z≤n)
+B→C {suc n} {suc m} (B.s≤s p) = C.cong-suc (B→C p)
 
 C→B : {n m : ℕ} -> n C.≤ m -> n B.≤ m
-C→B = {!!}
+C→B {zero} {m} p = B.z≤n
+C→B {suc n} C.≤-refl = B.s≤s B.≤-refl
+C→B {suc n} (C.≤-step {m} p) = B.≤-step (C→B p)
 
 {- ??? 2.8 Use the above to get a cheap proof of transitivity
        for C.≤. (First try to do it by hand; it's not so easy!)
    (1 MARK) -}
 
 C-transitive : ∀ {n m k} → n C.≤ m -> m C.≤ k -> n C.≤ k
-C-transitive p q = {!!}
+C-transitive p q = B→C (B.transitive (C→B p) (C→B q))
 
 {- ??? 2.9 Now show that C.≤ is also propositional, and finish off the
        isomorphism between B.≤ and C.≲.
@@ -191,12 +231,18 @@ C-transitive p q = {!!}
 -- HINT: You might find the following lemma, and its lemma, useful:
 
 ¬sucn≤n : {n : ℕ} -> ¬ (suc  n C.≤ n)
-¬sucn≤n {n} p = {!!} where
+¬sucn≤n {suc n} p = ¬sucn≤n (peel p)
+  where
   peel : ∀ {n m} → suc n C.≤ suc m → n C.≤ m
-  peel = {!!}
+  peel C.≤-refl = C.≤-refl
+  peel {zero} {suc m} (C.≤-step p) = C.≤-step (peel p)
+  peel {suc n} {suc m} (C.≤-step p) = C.≤-step (peel p)
 
 C-propositional : {n m : ℕ} → isPropositional (n C.≤ m)
-C-propositional = {!!}
+C-propositional C.≤-refl C.≤-refl = refl
+C-propositional C.≤-refl (C.≤-step q) = ⊥-elim (¬sucn≤n q)
+C-propositional (C.≤-step p) C.≤-refl = ⊥-elim (¬sucn≤n p)
+C-propositional (C.≤-step p) (C.≤-step q) = cong C.≤-step (C-propositional p q) 
 
 B↔C : (n m : ℕ) -> n B.≤ m ↔ n C.≤ m
 B↔C n m = {!!}
