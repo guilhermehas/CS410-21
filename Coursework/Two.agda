@@ -86,7 +86,7 @@ module A where
      (1 MARK) -}
 
   17≤42 : 17 ≤ 42
-  17≤42 = {!!}
+  17≤42 = tt
 
   {- ??? 2.2 Show that this definition is propositional, ie that any two
          proofs of it are equal.
