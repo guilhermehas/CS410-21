@@ -359,10 +359,15 @@ module Untyped where
      (2 MARKS) -}
 
   return : {A : Set} -> A -> EvalM A
-  return = {!!}
+  return a m = m , just a
+
+  returnMaybe : {A : Set} -> Maybe A -> EvalM A
+  returnMaybe a m = m , a
 
   _>>=_ : {A B : Set} -> EvalM A -> (A -> EvalM B) -> EvalM B
-  (x >>= f) ρ = {!!}
+  (x >>= f) ρ with x ρ
+  ... | val , nothing = val , nothing
+  ... | val , just p = f p val
 
   _>>_ : {A B : Set} -> EvalM A -> EvalM B -> EvalM B
   x >> y = x >>= (λ _ → y)
@@ -375,27 +380,33 @@ module Untyped where
   -}
 
   returnBind : ∀ {A B} → (a : A)(h : A → EvalM B) → return a >>= h ≡ h a
-  returnBind = {!!}
+  returnBind a h = refl
 
   bindReturn : ∀ {A}(m : EvalM A) → ∀ ρ → (m >>= return) ρ ≡ m ρ
-  bindReturn = {!!}
+  bindReturn m ρ with m ρ
+  ... | _ , just _ = refl
+  ... | _ , nothing = refl
 
   bindBind : ∀ {A B C} (m : EvalM A)(g : A → EvalM B)(h : B → EvalM C) →
              ∀ ρ → ((m >>= g) >>= h) ρ ≡ (m >>= (λ x → g x >>= h)) ρ
-  bindBind = {!!}
+  bindBind m g h ρ with m ρ
+  ... | _ , nothing = refl
+  ... | val , just a with g a val
+  ... | _ , just x = refl
+  ... | _ , nothing = refl
 
   {- ??? 2.14 Now implement the specific operations that this monad
          supports: failing, getting and storing.
      (1 MARK) -}
 
   fail : {A : Set} -> EvalM A
-  fail = {!!}
+  fail m = m , nothing
 
   evalGet : EvalM Val
-  evalGet = {!!}
+  evalGet ρ = ρ , just ρ
 
   evalPut : Val -> EvalM ⊤
-  evalPut = {!!}
+  evalPut val _ = val , just tt
 
   {- ??? 2.15 State the following properties of evalGet and evalPut as equations, and prove them:
 
@@ -407,11 +418,15 @@ module Untyped where
 
   {- HINT: If formulated correctly, these should be very easy to prove. -}
 
-  evalGetPut : {!!}
-  evalGetPut = {!!}
+  evalGetPut : EvalM ⊤
+  evalGetPut = do
+    x ← evalGet
+    evalPut x
 
-  evalPutGet : ∀ (ρ : Memory) → {!!}
-  evalPutGet = {!!}
+  evalPutGet : ∀ (ρ : Memory) → EvalM Val
+  evalPutGet ρ = do
+    evalPut ρ
+    evalGet
 
 
   {- ??? 2.16 Use do-notation to implement evaluation.
@@ -424,8 +439,23 @@ module Untyped where
   -- to bind e and match it against the more precise pattern `c x`, using
   -- `f` if `e` didn't match `c x`
 
+
+
   eval : Expr -> EvalM Val
-  eval = {!!}
+  eval (num x) = return (num x)
+  eval (bit x) = return (bit x)
+  eval get = evalGet
+  eval (store e then exp) = do
+    e' ← eval e
+    evalPut e'
+    eval exp
+  eval (e +E e') = do
+    x ← eval e
+    y ← eval e'
+    returnMaybe {!!}
+  eval (e *E e') = {!!}
+  eval (e <E e') = {!!}
+  eval (ifE exp then exp₁ else exp₂) = {!!}
 
   -- Here are some test cases you can comment in.  Let's only look at
   -- the produced value, and starting with 0 in the store.
