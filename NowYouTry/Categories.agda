@@ -139,6 +139,9 @@ record MonotoneMap (P Q : Preorder) : Set1 where
   field
     fun : Carrier P -> Carrier Q
     monotone : ∀ x y → x P.≤ y -> fun x Q.≤ fun y
+
+  monotoneI = λ {x y} → monotone x y
+
 open MonotoneMap
 
 eqMonotoneMap : {P Q : Preorder} -> {f g : MonotoneMap P Q} ->
@@ -147,4 +150,12 @@ eqMonotoneMap {P} {Q} {f} {g} refl = cong (λ z → record { fun = fun g; monoto
                                           (ext λ x → ext (λ y → ext λ p → propositional Q _ _))
 
 PREORDER : Category
-PREORDER = ?
+Obj PREORDER = Preorder
+Hom PREORDER = MonotoneMap
+fun (Category.id PREORDER) r = r
+monotone (Category.id PREORDER) _ _ p = p
+fun (comp PREORDER MAB MBC) = fun MBC Function.∘ fun MAB
+monotone (comp PREORDER MAB MBC) x y p = monotoneI MBC (monotoneI MAB p)
+assoc PREORDER = refl
+identityˡ PREORDER = refl
+identityʳ PREORDER = refl
