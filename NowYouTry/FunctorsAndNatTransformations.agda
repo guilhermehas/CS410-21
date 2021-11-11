@@ -136,15 +136,13 @@ flatten X (l <[ x ]> r) = flatten X l ++ [ x ] ++ flatten X r
 flattenNT : NaturalTransformation TREE LIST
 transform flattenNT _ tree = flatten _ tree
 natural flattenNT X Y f = ext α where
-  map-++ : ∀ {A B f} (xs ys : List A)
+  map-++ : ∀ {A B} f (xs ys : List A)
     → List.map {_} {A} {_} {B} f (xs ++ ys) ≡ List.map f xs ++ List.map f ys
-  map-++ [] ys = refl
-  map-++ (x ∷ xs) ys = cong₂ _∷_ refl (map-++ xs ys)
+  map-++ _ [] ys = refl
+  map-++ _ (x ∷ xs) ys = cong (_ ∷_) (map-++ _ xs ys)
 
   α : (tree : Tree X) →
       (SET Category.∘ (flatten Y)) (fmap TREE f) tree ≡
       (SET Category.∘ List.map f) (flatten X) tree
   α leaf = refl
-  α (l <[ x ]> r) with α l | α r
-  ... | eq1 | eq2 rewrite map-++ {f = f} (flatten X l) (x ∷ flatten X r)
-    = cong₂ _++_ eq1 (cong₂ _∷_ refl eq2)
+  α (l <[ x ]> r) rewrite α l | α r | map-++ f (flatten X l) (x ∷ flatten X r) = refl
