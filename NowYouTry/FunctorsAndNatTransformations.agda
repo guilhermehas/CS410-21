@@ -115,12 +115,36 @@ natural root X Y f = ext λ { leaf → refl ; (l <[ x ]> r) → refl }
 ---------------------------------------------------------------------------
 
 LIST : Functor SET SET
-LIST = {!!}
+act LIST = List
+fmap LIST = List.map
+identity LIST = ext α
+  where
+    α : ∀ {A} (xs : List A) → List.map (Category.id SET) xs ≡ Function.id xs
+    α [] = refl
+    α (x ∷ xs) = cong₂ _∷_ refl (α xs)
+homomorphism LIST = ext α where
+  α : ∀ {X f g} (x : List X) →
+      List.map {_} {X} ((SET Category.∘ g) f) x ≡
+      (SET Category.∘ List.map g) (List.map f) x
+  α [] = refl
+  α (x ∷ xs) = cong₂ _∷_ refl (α xs)
 
 flatten : (X : Set) -> Tree X -> List X
 flatten X leaf = []
 flatten X (l <[ x ]> r) = flatten X l ++ [ x ] ++ flatten X r
 
 flattenNT : NaturalTransformation TREE LIST
-flattenNT = {!!}
+transform flattenNT _ tree = flatten _ tree
+natural flattenNT X Y f = ext α where
+  map-++ : ∀ {A B f} (xs ys : List A)
+    → List.map {_} {A} {_} {B} f (xs ++ ys) ≡ List.map f xs ++ List.map f ys
+  map-++ [] ys = refl
+  map-++ (x ∷ xs) ys = cong₂ _∷_ refl (map-++ xs ys)
 
+  α : (tree : Tree X) →
+      (SET Category.∘ (flatten Y)) (fmap TREE f) tree ≡
+      (SET Category.∘ List.map f) (flatten X) tree
+  α leaf = refl
+  α (l <[ x ]> r) with α l | α r
+  ... | eq1 | eq2 rewrite map-++ {f = f} (flatten X l) (x ∷ flatten X r)
+    = cong₂ _++_ eq1 (cong₂ _∷_ refl eq2)
