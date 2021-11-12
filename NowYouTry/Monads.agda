@@ -230,13 +230,42 @@ module _ where
   Functor.identity LIST = ext map-id
   Functor.homomorphism LIST = ext map-compose
 
+  assoc-++ : ∀ {A} (xs ys zs : List A) → xs ++ ys ++ zs ≡ (xs ++ ys) ++ zs
+  assoc-++ [] ys zs = refl
+  assoc-++ (x ∷ xs) ys zs rewrite assoc-++ xs ys zs = refl
+
   concat-++ : ∀ {X} (xss yss : List (List X)) → concat (xss ++ yss) ≡ concat xss ++ concat yss
-  concat-++ xss yss = {!!}
+  concat-++ [] yss = refl
+  concat-++ (xs ∷ xss) yss rewrite concat-++ xss yss = assoc-++ xs _ _
 
   LIST-MONAD : Monad SET
-  functor LIST-MONAD = {!!}
-  returnNT LIST-MONAD = {!!}
-  joinNT LIST-MONAD = {!!}
-  returnJoin LIST-MONAD = {!!}
-  mapReturnJoin LIST-MONAD = {!!}
-  joinJoin LIST-MONAD = {!!}
+  functor LIST-MONAD = LIST
+  transform (returnNT LIST-MONAD) _ x = List.[ x ]
+  natural (returnNT LIST-MONAD) _ _ f = refl
+  transform (joinNT LIST-MONAD) _ = concat
+  natural (joinNT LIST-MONAD) X Y f = ext α where
+    β : ∀ xs → concat (List.map (List.map f) xs) ≡
+      List.map f (concat xs)
+    β [] = refl
+    β (xs ∷ xss) rewrite β xss = sym (map-++-commute f xs (concat xss))
+
+    α : (xs : List (List X)) →
+      (SET Category.∘ concat) (Functor.fmap (compFunctor LIST LIST) f) xs
+      ≡ (SET Category.∘ List.map f) concat xs
+    α xs rewrite concat-++ [] (List.map (List.map f) xs) = β xs
+
+  returnJoin LIST-MONAD {X} = ext α  where
+    α : (xs : List X) → xs ++ [] ≡ xs
+    α [] = refl
+    α (x ∷ xs) = let w = α xs in cong (_ ∷_) (α xs)
+
+  mapReturnJoin LIST-MONAD {X} = ext α where
+    α : ∀ (xs : List X) → concat (List.map List.[_] xs) ≡ xs
+    α [] = refl
+    α (x ∷ xs) rewrite α xs = refl
+
+  joinJoin LIST-MONAD {X} = ext α where
+    α : (xs : List (List (List X))) →
+          concat (concat xs) ≡ concat (List.map concat xs)
+    α [] = refl
+    α (xs ∷ xss) rewrite concat-++ xs (concat xss) | α xss = refl
