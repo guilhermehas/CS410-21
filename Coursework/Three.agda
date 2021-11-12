@@ -44,6 +44,7 @@ open import IO.Primitive          using (IO)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; cong; cong₂; cong-app; sym; trans; subst; module ≡-Reasoning)
 open ≡-Reasoning
+open import Axiom.Extensionality.Propositional
 open import Relation.Nullary      using (¬_; Dec; yes; no)
 
 open import Common.Category
@@ -51,7 +52,6 @@ open import Common.Category.Solver
 open import Lectures.Categories
 
 open import Common.Display
-
 
 ------------------------------------------------------------------------------
 --  A Baby but Important Universal Property (10 MARKS in total)
@@ -82,8 +82,9 @@ module _ (C : Category) where
 module _ where
   open IsTerminal
 
-  SET-has-terminal-object : IsTerminal SET {!!}
-  SET-has-terminal-object = {!!}
+  SET-has-terminal-object : IsTerminal SET ⊤
+  mediate SET-has-terminal-object _ = _
+  unique SET-has-terminal-object h = ext (F.const refl)
 
 {- ??? 3.2 Show that MONOID has a terminal object.
   (2 MARKS) -}
@@ -94,8 +95,19 @@ module _ where
 module _ where
   open IsTerminal
 
-  MONOID-has-terminal-object : IsTerminal MONOID {!!}
-  MONOID-has-terminal-object = {!!}
+  ⊤-mon : Monoid
+  Monoid.Carrier ⊤-mon = ⊤
+  Monoid._∙_ ⊤-mon _ _ = _
+  Monoid.ε ⊤-mon = _
+  Monoid.assoc ⊤-mon = refl
+  Monoid.identityˡ ⊤-mon = refl
+  Monoid.identityʳ ⊤-mon = refl
+
+  MONOID-has-terminal-object : IsTerminal MONOID ⊤-mon
+  MonoidMorphism.fun (mediate MONOID-has-terminal-object) _ = _
+  MonoidMorphism.preserves-ε (mediate MONOID-has-terminal-object) = refl
+  MonoidMorphism.preserves-∙ (mediate MONOID-has-terminal-object) _ _ = refl
+  unique MONOID-has-terminal-object h = {!!}
 
 {- ??? 3.3 Show that not every category has a terminal object.
    (3 MARKS) -}
@@ -105,10 +117,27 @@ module _ where
   open IsTerminal
 
   C : Category
-  C = {!!}
+  Obj C = ⊤
+  Hom C _ _ = Bool
+  Category.id C = false
+  comp C false false = false
+  comp C _ _ = true
+  assoc C {f = false} {false} {false} = refl
+  assoc C {f = false} {true} {false} = refl
+  assoc C {f = false} {false} {true} = refl
+  assoc C {f = true} {false} {false} = refl
+  assoc C {f = true} {false} {true} = refl
+  assoc C {f = false} {true} {true} = refl
+  assoc C {f = true} {true} {false} = refl
+  assoc C {f = true} {true} {true} = refl
+  identityˡ C {f = false} = refl
+  identityˡ C {f = true} = refl
+  identityʳ C {f = false} = refl
+  identityʳ C {f = true} = refl
 
   no-terminal : (X : Obj C) → ¬ IsTerminal C X
-  no-terminal = {!!}
+  no-terminal X record { mediate = mediate ; unique = unique } with trans (unique false) (sym (unique true))
+  ... | ()
 
 module _ (C : Category) where
   open Category
