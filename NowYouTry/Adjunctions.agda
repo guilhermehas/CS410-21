@@ -341,9 +341,13 @@ to-natural (kleisliAdjunction {C} M) f g = ext λ h →  C ⊧begin
 
 Both : Functor (PAIR SET SET) SET
 act Both (A , B) = A × B
-fmap Both = {!!}
-identity Both = {!!}
-homomorphism Both = {!!}
+fmap Both (f , g) (x , y) = f x , g y
+identity Both = refl
+homomorphism Both = refl
 
 ⊢diag : Adjunction (diag {SET}) Both
-⊢diag = {!!}
+to ⊢diag (f , g) x = f x , g x
+from ⊢diag f = proj₁ ∘′ f , proj₂ ∘′ f
+left-inverse-of ⊢diag _ = refl
+right-inverse-of ⊢diag _ = refl
+to-natural ⊢diag _ _ = refl
