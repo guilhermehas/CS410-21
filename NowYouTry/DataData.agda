@@ -222,13 +222,13 @@ module _ where
   -}
 
   treeCode : Desc
-  treeCode = {!!}
+  treeCode = `Σ bool λ x → if x then `Σ nat (λ _ → `⊤) else (`X `× `X)
 
   Treeℕ : Set
   Treeℕ = ⟦ treeCode ⟧Desc
 
   leaf : ℕ -> Treeℕ
-  leaf n = {!!}
+  leaf n = con (true , (n , _))
 
   node : Treeℕ -> Treeℕ -> Treeℕ
-  node l r = {!!}
+  node l r = con (false , (l , r))
