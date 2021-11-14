@@ -268,15 +268,30 @@ identityˡ POINTEDSET = eqStrictMap refl
 identityʳ POINTEDSET = eqStrictMap refl
 
 forgetPoint : Functor POINTEDSET SET
-forgetPoint = {!!}
+act forgetPoint (Carrier , point) = Carrier
+fmap forgetPoint (fun , preserves-*) a = fun a
+identity forgetPoint = refl
+homomorphism forgetPoint = refl
 
 open import Data.Maybe as Maybe using (Maybe; nothing; just; map)
 open import Data.Maybe.Properties renaming (map-id to mmap-id; map-compose to mmap-compose)
 
 addPoint : Functor SET POINTEDSET
-addPoint = {!!}
+Carrier (act addPoint X) = Maybe X
+point (act addPoint x) = nothing
+fun (fmap addPoint f) (just x) = just (f x)
+fun (fmap addPoint f) nothing = nothing
+preserves-* (fmap addPoint f) = refl
+identity addPoint = eqStrictMap (ext λ{ (just x) → refl ; nothing → refl})
+homomorphism addPoint = eqStrictMap (ext λ{ (just x) → refl ; nothing → refl})
 
 addPoint⊣forgetPoint : Adjunction addPoint forgetPoint
-addPoint⊣forgetPoint = {!!}
+to addPoint⊣forgetPoint (fun , preserves-*) x = fun (just x)
+fun (from addPoint⊣forgetPoint f) (just x) = f x
+fun (from addPoint⊣forgetPoint {B = Carrier , point} f) nothing = point
+preserves-* (from addPoint⊣forgetPoint f) = refl
+left-inverse-of addPoint⊣forgetPoint h = eqStrictMap (ext λ{ (just x) → refl ; nothing → sym (preserves-* h) })
+right-inverse-of addPoint⊣forgetPoint k = refl
+to-natural addPoint⊣forgetPoint f g = refl
 
 -- what is the monad induced by this adjunction?
