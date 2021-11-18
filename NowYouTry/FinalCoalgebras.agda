@@ -63,7 +63,11 @@ record Tree (A : Set) : Set where
 open Tree
 
 repeat : {A : Set} -> A -> Tree A
-repeat a = {!!}
+value (repeat a) = a
+left (repeat a) = repeat a
+right (repeat a) = repeat a
 
 Tree-map : {A B : Set} -> (A -> B) -> Tree A -> Tree B
-Tree-map = {!!}
+value (Tree-map f tree) = f (value tree)
+left (Tree-map f tree) = Tree-map f (left tree)
+right (Tree-map f tree) = Tree-map f (right tree)
